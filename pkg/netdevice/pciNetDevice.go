@@ -26,12 +26,16 @@ import (
 // pciNetDevice extends pciDevice
 type pciNetDevice struct {
 	types.PciDevice
-	ifName    string
-	pfName    string
-	linkSpeed string
-	rdmaSpec  types.RdmaSpec
-	linkType  string
+	ifName        string
+	pfName        string
+	linkSpeed     string
+	rdmaSpec      types.RdmaSpec
+	linkType      string
+	dic           *utils.DevlinkInfoClient
+	getDDPProfile ddpProfileGetFunc
 }
+
+type ddpProfileGetFunc func(string) (string, error)
 
 // NewPciNetDevice returns an instance of PciNetDevice interface
 func NewPciNetDevice(dev *ghw.PCIDevice, rFactory types.ResourceFactory, rc *types.ResourceConfig) (types.PciNetDevice, error) {
@@ -90,13 +94,27 @@ func NewPciNetDevice(dev *ghw.PCIDevice, rFactory types.ResourceFactory, rc *typ
 		linkType = la.EncapType
 	}
 
+	devlinkClient := utils.NewDevlinkInfoClient()
+
+	var ddpFunc ddpProfileGetFunc
+
+	if devlinkClient.IsDevlinkSupportedByPCIDevice(pciAddr) {
+		ddpFunc = devlinkClient.DevlinkGetDDPProfiles
+	} else if utils.IsDDPToolSupportedByDevice(pciAddr) {
+		ddpFunc = utils.GetDDPProfiles
+	} else {
+		ddpFunc = unsupportedDDP
+	}
+
 	return &pciNetDevice{
-		PciDevice: pciDev,
-		ifName:    ifName,
-		pfName:    pfName,
-		linkSpeed: "", // TO-DO: Get this using utils pkg
-		rdmaSpec:  rdmaSpec,
-		linkType:  linkType,
+		PciDevice:     pciDev,
+		ifName:        ifName,
+		pfName:        pfName,
+		linkSpeed:     "", // TO-DO: Get this using utils pkg
+		rdmaSpec:      rdmaSpec,
+		linkType:      linkType,
+		dic:           &devlinkClient,
+		getDDPProfile: ddpFunc,
 	}, nil
 }
 
@@ -120,9 +138,13 @@ func (nd *pciNetDevice) GetLinkType() string {
 	return nd.linkType
 }
 
+func unsupportedDDP(device string) (string, error) {
+	return "", utils.DDPNotSupportedError(device)
+}
+
 func (nd *pciNetDevice) GetDDPProfiles() string {
 	pciAddr := nd.GetPciAddr()
-	ddpProfile, err := utils.GetDDPProfiles(pciAddr)
+	ddpProfile, err := nd.getDDPProfile(pciAddr)
 	if err != nil {
 		glog.Infof("GetDDPProfiles(): unable to get ddp profiles for device %s : %q", pciAddr, err)
 		return ""
