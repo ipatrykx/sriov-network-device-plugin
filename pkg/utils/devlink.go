@@ -14,11 +14,11 @@ const (
 	// DevlinkCmdInfoGet command ID
 	DevlinkCmdInfoGet = 51 // DEVLINK_CMD_INFO_GET
 	// DevlinkAttrInfoVersionFixed is nested structure for fixed values
-	DevlinkAttrInfoVersionFixed= 100// DEVLINK_ATTR_INFO_VERSION_FIXED
+	DevlinkAttrInfoVersionFixed = 100 // DEVLINK_ATTR_INFO_VERSION_FIXED
 	// DevlinkAttrInfoVersionRunning is nested structure for current values
-	DevlinkAttrInfoVersionRunning = 101// DEVLINK_ATTR_INFO_VERSION_RUNNING
+	DevlinkAttrInfoVersionRunning = 101 // DEVLINK_ATTR_INFO_VERSION_RUNNING
 	// DevlinkAttrInfoVersionStored is nested structure for stored values
-	DevlinkAttrInfoVersionStored = 102// DEVLINK_ATTR_INFO_VERSION_STORED
+	DevlinkAttrInfoVersionStored = 102 // DEVLINK_ATTR_INFO_VERSION_STORED
 	// DevlinkAttrInfoVersionName is value that indicates info label
 	DevlinkAttrInfoVersionName = 103 // DEVLINK_ATTR_INFO_VERSION_NAME
 	// DevlinkAttrInfoVersionValue is value that indicates info value
@@ -26,8 +26,9 @@ const (
 	// FwAppNameKey to extract DDP name
 	FwAppNameKey = "fw.app.name"
 
-	pciBus     = "pci"
-	headerSize = 4
+	pciBus        = "pci"
+	headerSize    = 4
+	nestedAttrNum = 2
 )
 
 // devlinkInfoGetter is function that is responsible for getting devlink info message
@@ -91,7 +92,7 @@ func (dic DevlinkInfoClient) DevlinkGetDeviceInfoByNameAndKeys(bus, device strin
 }
 
 // DevlinkGetDeviceInfoByNameAndKey returns values for selected key in device info
-func (dic DevlinkInfoClient) DevlinkGetDeviceInfoByNameAndKey(bus, device string, key string) (string, error) {
+func (dic DevlinkInfoClient) DevlinkGetDeviceInfoByNameAndKey(bus, device, key string) (string, error) {
 	keys := []string{key}
 	info, err := dic.DevlinkGetDeviceInfoByNameAndKeys(bus, device, keys)
 	if err != nil {
@@ -159,7 +160,7 @@ func getNestedInfoData(msg []byte) (string, string, error) {
 		return "", "", err
 	}
 
-	if len(nestedAttrs) != 2 {
+	if len(nestedAttrs) != nestedAttrNum {
 		return "", "", ReadAttributesError("getNestedInfoData", "too few attributes in nested structure")
 	}
 
@@ -211,7 +212,7 @@ func parseInfoData(msg []byte, data map[string]string) error {
 	return nil
 }
 
-func createCmdReq(cmd uint8, bus string, device string) (*nl.NetlinkRequest, error) {
+func createCmdReq(cmd uint8, bus, device string) (*nl.NetlinkRequest, error) {
 	f, err := netlink.GenlFamilyGet(nl.GENL_DEVLINK_NAME)
 	if err != nil {
 		return nil, err
