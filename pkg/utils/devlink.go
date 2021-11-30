@@ -8,19 +8,18 @@ import (
 )
 
 const (
-	// fwAppNameKey to extract DDP name
+	// fwAppNameKey is a key to extract DDP name
 	fwAppNameKey = "fw.app.name"
-
-	pciBus = "pci"
+	pciBus       = "pci"
 )
 
-// IsDevlinkSupportedByPCIDevice checks if PCI devie supports devlink info command
-func IsDevlinkSupportedByPCIDevice(device string) bool {
-	return IsDevlinkSupportedByDevice(pciBus, device)
+// IsDevlinkDDPSupportedByPCIDevice checks if DDP of PCI device can be acquired with devlink info command
+func IsDevlinkDDPSupportedByPCIDevice(device string) bool {
+	return IsDevlinkDDPSupportedByDevice(pciBus, device)
 }
 
-// IsDevlinkSupportedByDevice checks if device supports devlink info command
-func IsDevlinkSupportedByDevice(bus, device string) bool {
+// IsDevlinkDDPSupportedByDevice checks if DDP of device can be acquired with devlink info command
+func IsDevlinkDDPSupportedByDevice(bus, device string) bool {
 	if _, err := DevlinkGetDeviceInfoByNameAndKey(bus, device, fwAppNameKey); err != nil {
 		return false
 	}
