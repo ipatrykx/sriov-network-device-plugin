@@ -31,7 +31,6 @@ type pciNetDevice struct {
 	linkSpeed     string
 	rdmaSpec      types.RdmaSpec
 	linkType      string
-	dic           *utils.DevlinkInfoClient
 	getDDPProfile ddpProfileGetFunc
 }
 
@@ -94,12 +93,10 @@ func NewPciNetDevice(dev *ghw.PCIDevice, rFactory types.ResourceFactory, rc *typ
 		linkType = la.EncapType
 	}
 
-	devlinkClient := utils.NewDevlinkInfoClient()
-
 	var ddpFunc ddpProfileGetFunc
 
-	if devlinkClient.IsDevlinkSupportedByPCIDevice(pciAddr) {
-		ddpFunc = devlinkClient.DevlinkGetDDPProfiles
+	if utils.IsDevlinkSupportedByPCIDevice(pciAddr) {
+		ddpFunc = utils.DevlinkGetDDPProfiles
 	} else if utils.IsDDPToolSupportedByDevice(pciAddr) {
 		ddpFunc = utils.GetDDPProfiles
 	} else {
@@ -113,7 +110,6 @@ func NewPciNetDevice(dev *ghw.PCIDevice, rFactory types.ResourceFactory, rc *typ
 		linkSpeed:     "", // TO-DO: Get this using utils pkg
 		rdmaSpec:      rdmaSpec,
 		linkType:      linkType,
-		dic:           &devlinkClient,
 		getDDPProfile: ddpFunc,
 	}, nil
 }
